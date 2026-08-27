@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tạo Avatar - Ngày An toàn người bệnh Thế giới 2026</title>
+    <style>
+        :root {
+            --primary-blue: #0d47a1;
+            --accent-orange: #ff6600;
+            --bg-color: #f4f7f6;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px 10px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .hospital-title {
+            color: var(--primary-blue);
+            font-size: 1.8rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .slogan {
+            color: var(--accent-orange);
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-top: 5px;
+        }
+
+        .card {
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            max-width: 500px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .canvas-container {
+            position: relative;
+            width: 100%;
+            max-width: 360px;
+            aspect-ratio: 1 / 1;
+            margin: 15px 0;
+            touch-action: none; /* Tránh cuộn trang khi kéo thả ảnh trên điện thoại */
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background-color: #eef2f5;
+            cursor: grab;
+        }
+
+        canvas:active {
+            cursor: grabbing;
+        }
+
+        .controls {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .field-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--primary-blue);
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .btn-upload {
+            background-color: var(--primary-blue);
+            color: #fff;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-upload:hover {
+            background-color: #083378;
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        input[type="range"] {
+            flex: 1;
+            accent-color: var(--accent-orange);
+        }
+
+        .btn-download {
+            background-color: var(--accent-orange);
+            color: #fff;
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 10px;
+        }
+
+        .btn-download:hover {
+            background-color: #e05500;
+        }
+
+        .instruction {
+            font-size: 0.85rem;
+            color: #666;
+            text-align: center;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1 class="hospital-title">BỆNH VIỆN NHI ĐỒNG 1</h1>
+        <p class="slogan">Chăm sóc an toàn suốt đời!</p>
+    </header>
+
+    <div class="card">
+        <label for="imageLoader" class="btn-upload">📷 Chọn ảnh cá nhân</label>
+        <input type="file" id="imageLoader" accept="image/*">
+
+        <div class="canvas-container">
+            <canvas id="avatarCanvas" width="800" height="800"></canvas>
+        </div>
+
+        <div class="controls">
+            <div class="field-group">
+                <label for="zoomRange">Phóng to / Thu nhỏ ảnh:</label>
+                <div class="slider-container">
+                    <input type="range" id="zoomRange" min="0.2" max="3" step="0.01" value="1">
+                </div>
+            </div>
+
+            <p class="instruction">💡 Bạn có thể dùng chuột hoặc ngón tay để kéo di chuyển vị trí ảnh trực tiếp trên khung tròn.</p>
+
+            <button id="downloadBtn" class="btn-download">Tải Avatar Về Máy</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('avatarCanvas');
+        const ctx = canvas.getContext('2d');
+        const imageLoader = document.getElementById('imageLoader');
+        const zoomRange = document.getElementById('zoomRange');
+        const downloadBtn = document.getElementById('downloadBtn');
+
+        const CANVAS_SIZE = 800;
+        const CENTER = CANVAS_SIZE / 2;
+        const AVATAR_RADIUS = 380;
+        const INNER_RADIUS = 300; // Bán kính chứa ảnh cá nhân
+
+        let userImage = null;
+        let imgX = CENTER;
+        let imgY = CENTER;
+        let imgScale = 1;
+        let isDragging = false;
+        let startX, startY;
+
+        // Khởi tạo khung canvas ban đầu
+        drawAvatar();
+
+        // Xử lý nạp ảnh
+        imageLoader.addEventListener('change', (e) => {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                userImage = new Image();
+                userImage.onload = () => {
+                    // Đặt vị trí mặc định nằm chính giữa
+                    imgX = CENTER;
+                    imgY = CENTER;
+                    
+                    // Tính scale ban đầu sao cho vừa khung tròn không bị méo
+                    const minSide = Math.min(userImage.width, userImage.height);
+                    imgScale = (INNER_RADIUS * 2) / minSide;
+                    zoomRange.value = imgScale;
+
+                    drawAvatar();
+                };
+                userImage.src = event.target.result;
+            };
+            if (e.target.files[0]) {
+                reader.readAsDataURL(e.target.files[0]);
+            }
+        });
+
+        // Xử lý zoom
+        zoomRange.addEventListener('input', (e) => {
+            imgScale = parseFloat(e.target.value);
+            drawAvatar();
+        });
+
+        // Hỗ trợ sự kiện Chuột & Cảm ứng (Windows, Android, iOS)
+        canvas.addEventListener('pointerdown', (e) => {
+            if (!userImage) return;
+            isDragging = true;
+            startX = e.clientX - imgX;
+            startY = e.clientY - imgY;
+            canvas.setPointerCapture(e.pointerId);
+        });
+
+        canvas.addEventListener('pointermove', (e) => {
+            if (isDragging && userImage) {
+                imgX = e.clientX - startX;
+                imgY = e.clientY - startY;
+                drawAvatar();
+            }
+        });
+
+        canvas.addEventListener('pointerup', (e) => {
+            isDragging = false;
+            try { canvas.releasePointerCapture(e.pointerId); } catch(err){}
+        });
+
+        // Hàm vẽ toàn bộ Avatar
+        function drawAvatar() {
+            ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+
+            // 1. TẠO MẶT NẠ TRÒN ĐỂ CẮT ẢNH CÁ NHÂN (Giữ đúng tỉ lệ, không tạo bóng)
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(CENTER, CENTER, INNER_RADIUS, 0, Math.PI * 2);
+            ctx.clip();
+
+            // Nền trắng mặc định
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+
+            // Vẽ ảnh người dùng nếu có
+            if (userImage) {
+                const drawWidth = userImage.width * imgScale;
+                const drawHeight = userImage.height * imgScale;
+                // Căn giữa hình ảnh theo tọa độ kéo
+                ctx.drawImage(
+                    userImage, 
+                    imgX - drawWidth / 2, 
+                    imgY - drawHeight / 2, 
+                    drawWidth, 
+                    drawHeight
+                );
+            }
+            ctx.restore();
+
+            // 2. VẼ KHUNG VIỀN TRÒN TRANG TRÍ (Màu xanh chủ đạo)
+            const ringThickness = AVATAR_RADIUS - INNER_RADIUS; // 80px
+            const ringMidRadius = INNER_RADIUS + (ringThickness / 2);
+
+            ctx.beginPath();
+            ctx.arc(CENTER, CENTER, ringMidRadius, 0, Math.PI * 2);
+            ctx.strokeStyle = '#0d47a1'; // Xanh dương chủ đạo
+            ctx.lineWidth = ringThickness;
+            ctx.stroke();
+
+            // Đường chỉ mảnh trang trí màu cam ở sát mép trong
+            ctx.beginPath();
+            ctx.arc(CENTER, CENTER, INNER_RADIUS, 0, Math.PI * 2);
+            ctx.strokeStyle = '#ff6600';
+            ctx.lineWidth = 4;
+            ctx.stroke();
+
+            // 3. VẼ CHỮ UỐN CONG THEO VIỀN TRÒN
+            // Thông điệp phía trên
+            drawCurvedText(
+                "HƯỞNG ỨNG NGÀY AN TOÀN NGƯỜI BỆNH THẾ GIỚI 17-9-2026", 
+                CENTER, CENTER, ringMidRadius, -Math.PI / 2, true
+            );
+
+            // Thông điệp phía dưới
+            drawCurvedText(
+                "Chăm sóc An toàn suốt đời!", 
+                CENTER, CENTER, ringMidRadius, Math.PI / 2, false
+            );
+
+            // 4. VẼ DẤU SAO PHÂN CÁCH HAI BÊN
+            drawStar(CENTER - ringMidRadius, CENTER, 12, '#ff6600'); // Bên trái
+            drawStar(CENTER + ringMidRadius, CENTER, 12, '#ff6600'); // Bên phải
+        }
+
+        // Hàm vẽ chữ uốn cong dọc theo bán kính
+        function drawCurvedText(text, cx, cy, radius, centerAngle, isTop) {
+            ctx.save();
+            ctx.font = 'bold 22px Arial, sans-serif';
+            ctx.fillStyle = isTop ? '#ffffff' : '#ff6600'; // Dòng trên màu trắng, dòng dưới màu cam
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            let charWidths = [];
+            let totalWidth = 0;
+
+            for (let i = 0; i < text.length; i++) {
+                let w = ctx.measureText(text[i]).width;
+                charWidths.push(w);
+                totalWidth += w;
+            }
+
+            let totalAngle = totalWidth / radius;
+            let currentAngle = isTop 
+                ? centerAngle - (totalAngle / 2) 
+                : centerAngle + (totalAngle / 2);
+
+            for (let i = 0; i < text.length; i++) {
+                let char = text[i];
+                let charAngle = charWidths[i] / radius;
+                let midAngle = isTop 
+                    ? currentAngle + (charAngle / 2) 
+                    : currentAngle - (charAngle / 2);
+
+                ctx.save();
+                ctx.translate(cx + radius * Math.cos(midAngle), cy + radius * Math.sin(midAngle));
+                ctx.rotate(isTop ? midAngle + Math.PI / 2 : midAngle - Math.PI / 2);
+                ctx.fillText(char, 0, 0);
+                ctx.restore();
+
+                if (isTop) {
+                    currentAngle += charAngle;
+                } else {
+                    currentAngle -= charAngle;
+                }
+            }
+            ctx.restore();
+        }
+
+        // Hàm vẽ ngôi sao 5 cánh làm điểm phân cách
+        function drawStar(cx, cy, r, color) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.fillStyle = color;
+            for (let i = 0; i < 5; i++) {
+                ctx.lineTo(Math.cos((18 + i * 72) * Math.PI / 180) * r + cx,
+                           Math.sin((18 + i * 72) * Math.PI / 180) * r + cy);
+                ctx.lineTo(Math.cos((54 + i * 72) * Math.PI / 180) * (r / 2) + cx,
+                           Math.sin((54 + i * 72) * Math.PI / 180) * (r / 2) + cy);
+            }
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+        }
+
+        // Xử lý Tải ảnh về máy
+        downloadBtn.addEventListener('click', () => {
+            if (!userImage) {
+                alert("Vui lòng chọn ảnh cá nhân trước khi tải về!");
+                return;
+            }
+            const link = document.createElement('a');
+            link.download = 'Avatar_NgayAnToanNguoiBenh_2026.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        });
+    </script>
+</body>
+</html>
