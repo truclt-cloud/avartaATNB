@@ -384,47 +384,25 @@
         }
 
         // Xử lý Tải ảnh về máy
-    downloadBtn.addEventListener('click', () => {
-            if (!userImage) {
-                alert("Vui lòng chọn ảnh cá nhân trước khi tải về!");
-                return;
-            }
-
-            // Chuyển canvas thành URL ảnh PNG
-            const dataUrl = canvas.toDataURL('image/png');
-
-            // 1. Kích hoạt tải tự động (Dành cho máy tính & Chrome/Safari chuẩn)
-            const link = document.createElement('a');
-            link.download = 'Avatar_NgayAnToanNguoiBenh_2026.png';
-            link.href = dataUrl;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-
-            // 2. Xuất thêm 1 thẻ <img> để nhấn giữ lưu ảnh (Giải pháp dự phòng cho Zalo)
-            let resultImg = document.getElementById('resultImage');
-            let resultGuide = document.getElementById('resultGuide');
-
-            if (!resultImg) {
-                resultGuide = document.createElement('p');
-                resultGuide.id = 'resultGuide';
-                resultGuide.style.cssText = 'color: #ff6600; font-weight: bold; text-align: center; margin-top: 15px; font-size: 0.9rem;';
-                resultGuide.innerHTML = '👇 Nếu không tự tải về, hãy nhấn giữ 2 giây vào ảnh bên dưới để chọn "Lưu ảnh":';
-                downloadBtn.parentNode.appendChild(resultGuide);
-
-                resultImg = document.createElement('img');
-                resultImg.id = 'resultImage';
-                resultImg.style.cssText = 'width: 100%; max-width: 360px; border-radius: 50%; margin: 10px auto; display: block; border: 3px solid #ff6600; box-shadow: 0 4px 10px rgba(0,0,0,0.15);';
-                downloadBtn.parentNode.appendChild(resultImg);
-            }
-
-            resultImg.src = dataUrl;
-            
-            // Tự động cuộn màn hình xuống vùng ảnh cho người dùng dễ thấy
-            setTimeout(() => {
-                resultGuide.scrollIntoView({ behavior: 'smooth' });
-            }, 200);
-        });
+   // Xử lý Tải ảnh về máy
+downloadBtn.addEventListener('click', () => {
+    if (!userImage) {
+        alert("Vui lòng chọn ảnh cá nhân trước khi tải về!");
+        return;
+    }
+    
+    canvas.toBlob((blob) => {
+        if (!blob) return;
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.download = 'Avatar_NgayAnToanNguoiBenh_2026.png';
+        link.href = url;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    }, 'image/png');
+});
     </script>
 </body>
 </html>
