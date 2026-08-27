@@ -384,8 +384,7 @@
         }
 
         // Xử lý Tải ảnh về máy
-   // Xử lý Tải ảnh về máy
-downloadBtn.addEventListener('click', () => {
+        downloadBtn.addEventListener('click', () => {
     if (!userImage) {
         alert("Vui lòng chọn ảnh cá nhân trước khi tải về!");
         return;
@@ -402,7 +401,7 @@ downloadBtn.addEventListener('click', () => {
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
     }, 'image/png');
-});
+    });
     </script>
 </body>
 </html>
