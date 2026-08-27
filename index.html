@@ -384,27 +384,36 @@
         }
 
         // Xử lý Tải ảnh về máy
-       downloadBtn.addEventListener('click', () => {
-    if (!userImage) {
-        alert("Vui lòng chọn ảnh cá nhân trước khi tải về!");
-        return;
-    }
+    downloadBtn.addEventListener('click', () => {
+            if (!userImage) {
+                alert("Vui lòng chọn ảnh cá nhân trước khi tải về!");
+                return;
+            }
 
-    const dataUrl = canvas.toDataURL('image/png');
+            const dataUrl = canvas.toDataURL('image/png');
 
-    // Mở ảnh sang tab mới nếu bị chặn tải xuống
-    const newTab = window.open();
-    if (newTab) {
-        newTab.document.write(`<img src="${dataUrl}" style="width:100%;max-width:500px;display:block;margin:20px auto;"/>`);
-        newTab.document.write('<p style="text-align:center;font-family:sans-serif;font-size:18px;">Nhấn giữ vào ảnh trên để chọn <b>"Lưu ảnh"</b> về máy</p>');
-    } else {
-        // Trường hợp bị chặn popup, tự tạo thẻ download chuẩn
-        const link = document.createElement('a');
-        link.download = 'Avatar_NgayAnToanNguoiBenh_2026.png';
-        link.href = dataUrl;
-        link.click();
-    }
-});
+            // Tạo thẻ img để hiển thị ảnh kết quả ngay dưới nút bấm
+            let resultImg = document.getElementById('resultImage');
+            let resultGuide = document.getElementById('resultGuide');
+
+            if (!resultImg) {
+                resultGuide = document.createElement('p');
+                resultGuide.id = 'resultGuide';
+                resultGuide.style.cssText = 'color: #ff6600; font-weight: bold; text-align: center; margin-top: 15px; font-size: 0.95rem;';
+                resultGuide.innerHTML = '👇 NHẤN GIỮ 2 GIÂY VÀO ẢNH BÊN DƯỚI ĐỂ LƯU VỀ MÁY:';
+                downloadBtn.parentNode.appendChild(resultGuide);
+
+                resultImg = document.createElement('img');
+                resultImg.id = 'resultImage';
+                resultImg.style.cssText = 'width: 100%; max-width: 360px; border-radius: 50%; margin: 10px auto; display: block; border: 3px solid #ff6600;';
+                downloadBtn.parentNode.appendChild(resultImg);
+            }
+
+            resultImg.src = dataUrl;
+            
+            // Cuộn màn hình xuống ảnh kết quả
+            resultImg.scrollIntoView({ behavior: 'smooth' });
+        });
     </script>
 </body>
 </html>
