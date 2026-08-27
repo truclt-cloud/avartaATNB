@@ -384,16 +384,24 @@
         }
 
         // Xử lý Tải ảnh về máy
-        downloadBtn.addEventListener('click', () => {
-            if (!userImage) {
-                alert("Vui lòng chọn ảnh cá nhân trước khi tải về!");
-                return;
-            }
-            const link = document.createElement('a');
-            link.download = 'Avatar_NgayAnToanNguoiBenh_2026.png';
-            link.href = canvas.toDataURL('image/png');
-            link.click();
-        });
+       downloadBtn.addEventListener('click', () => {
+    if (!userImage) {
+        alert("Vui lòng chọn ảnh cá nhân trước khi tải về!");
+        return;
+    }
+    
+    canvas.toBlob((blob) => {
+        if (!blob) return;
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.download = 'Avatar_NgayAnToanNguoiBenh_2026.png';
+        link.href = url;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    }, 'image/png');
+});
     </script>
 </body>
 </html>
